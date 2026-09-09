@@ -42,7 +42,10 @@ class MacroBot:
     def analyze(self,x,ctx:MarketContext):
         score={"Bullish Gold":1,"Bearish Gold":-1}.get(ctx.macro_bias,0)
         risk=75 if ctx.news_within() else 15 if ctx.source_status!="ok" else 5
-        return BotOpinion(self.name,d(score,.2),ctx.macro_confidence if score else 35,[f"macro bias: {ctx.macro_bias}",f"source: {ctx.source_status}"],risk=risk,metadata={"score":score,"news_near":ctx.news_within()})
+        details=[f"macro bias: {ctx.macro_bias}",f"source: {ctx.source_status}"]
+        if ctx.dxy_change is not None: details.append(f"DXY 5-session change: {ctx.dxy_change:+.2f}%")
+        if ctx.yield_change is not None: details.append(f"US10Y 5-session change: {ctx.yield_change:+.1f} bp")
+        return BotOpinion(self.name,d(score,.2),ctx.macro_confidence if score else 35,details,risk=risk,metadata={"score":score,"news_near":ctx.news_within()})
 
 class VolatilityBot:
     name="Volatility"
@@ -56,4 +59,3 @@ class QuantBot:
     def analyze(self,x):
         ret=x.close.pct_change(); mom=x.close.pct_change(12).iloc[-1]; vol=ret.rolling(50).std().iloc[-1]; z=mom/(vol*np.sqrt(12)+1e-9); score=float(np.clip(z/2,-1,1))
         return BotOpinion(self.name,d(score,.2),conf(score),["12-bar normalized momentum", "volatility regime"],metadata={"score":score})
-
