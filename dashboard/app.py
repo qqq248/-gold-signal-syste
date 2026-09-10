@@ -18,8 +18,12 @@ except FileNotFoundError:
 from config.settings import Settings
 from main import provider
 from service import Analyzer
-# Live FRED macro context; this import also verifies the deployed provider version.
-from providers.context import live_market_context
+# Streamlit can keep an older imported module in memory after a GitHub redeploy.
+# Reload it so newly deployed macro functions are available without a manual reboot.
+import importlib
+from providers import context as market_context_provider
+market_context_provider = importlib.reload(market_context_provider)
+live_market_context = market_context_provider.live_market_context
 from database.journal import Journal
 from formatting import format_signal
 st.set_page_config(page_title="Gold Signal System",layout="wide")
